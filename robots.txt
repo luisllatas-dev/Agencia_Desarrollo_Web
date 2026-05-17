@@ -1,0 +1,4 @@
+# Robots.txt — Agent Web Agency
+User-agent: *
+Allow: /
+Sitemap: https://agentwebchiclayo.com/sitemap.xml
