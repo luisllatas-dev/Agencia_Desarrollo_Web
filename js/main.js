@@ -64,25 +64,38 @@ if (form) {
     btn.disabled = true;
 
     try {
+      // Netlify Forms requiere: Content-Type urlencoded + form-name en el body
+      const formData = new FormData(form);
+      const encoded  = new URLSearchParams(formData).toString();
+
       const res = await fetch('/', {
-        method: 'POST',
+        method : 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(new FormData(form)).toString()
+        body   : encoded
       });
 
       if (res.ok) {
-        // Enviar también por WhatsApp con datos pre-llenados
+        // Abrir WhatsApp con los datos del cliente pre-llenados
         const customMsg = encodeURIComponent(
-          `Hola Agent! Me llamo ${name}, tengo un negocio de ${biz} en Chiclayo y me interesa una ${type}. Mi teléfono es ${phone}.`
+          `Hola Agent! Me llamo ${name}, tengo un negocio "${biz}" en Chiclayo y me interesa una ${type}. Mi WhatsApp es ${phone}.`
         );
         window.open(`https://wa.me/${WA_NUMBER}?text=${customMsg}`, '_blank');
-        form.reset();
-        showToast('✅ ¡Mensaje enviado! Te contactaremos pronto.');
+
+        // Redirigir a página de agradecimiento
+        window.location.href = '/gracias.html';
       } else {
-        throw new Error('Error al enviar');
+        throw new Error(`HTTP ${res.status}`);
       }
-    } catch {
-      showToast('❌ Hubo un error. Escríbenos por WhatsApp directamente.', true);
+    } catch (err) {
+      console.error('[Formulario] Error al enviar:', err);
+      // Fallback: abrir WhatsApp directamente para no perder el lead
+      const fallbackMsg = encodeURIComponent(
+        `Hola Agent, intenté enviar el formulario pero tuve un problema. Me llamo ${name}, tengo un negocio "${biz}" y quiero información sobre una ${type}. Mi WhatsApp es ${phone}.`
+      );
+      showToast('❌ Hubo un error al enviar. Abriendo WhatsApp…', true);
+      setTimeout(() => {
+        window.open(`https://wa.me/${WA_NUMBER}?text=${fallbackMsg}`, '_blank');
+      }, 1500);
     } finally {
       btn.textContent = 'Enviar mensaje';
       btn.disabled = false;
